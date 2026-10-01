@@ -475,10 +475,21 @@ function initUI() {
 
   async function autoLoad() {
     try {
-      const res = await fetch("data/results.csv", { cache: "no-store" });
-      if (res.ok) { setData(decodeBuffer(await res.arrayBuffer()), "data/results.csv", false); return; }
+      for (const path of ["data/results.csv", "results.csv"]) {
+        try {
+          const res = await fetch(path, { cache: "no-store" });
+          if (res.ok) { setData(decodeBuffer(await res.arrayBuffer()), path, false); return; }
+        } catch (e) { /* 이 경로엔 없음, 다음 경로 시도 */ }
+      }
     } catch (e) { /* file:// 등에서는 실패 → 아래 샘플 */ }
     if (typeof window.SAMPLE_CSV === "string") { setData(window.SAMPLE_CSV, "샘플 데이터", true); return; }
+    // <script> 태그로 미리 못 불러왔으면(예: data/ 폴더 없이 루트에 올린 경우), fetch로 직접 시도
+    for (const path of ["data/sample_results.csv", "sample_results.csv"]) {
+      try {
+        const res = await fetch(path, { cache: "no-store" });
+        if (res.ok) { setData(decodeBuffer(await res.arrayBuffer()), "샘플 데이터", true); return; }
+      } catch (e) { /* 이 경로엔 없음, 다음 경로 시도 */ }
+    }
     $("#loadMsg").className = "load-msg err";
     $("#loadMsg").textContent = "데이터가 없습니다. 위 상자에 results.csv 를 끌어다 놓으세요.";
     $("#main").classList.add("nodata");
